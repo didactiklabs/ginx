@@ -107,7 +107,7 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 					}
 				}
 			} else {
-				utils.Logger.Info("No changes detected in remote repository.", zap.String("url", source))
+				utils.Logger.Info("No changes detected in remote repository.", zap.String("url", source), zap.String("branch", branch))
 			}
 			time.Sleep(interval)
 		}
