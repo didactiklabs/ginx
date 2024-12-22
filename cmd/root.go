@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 
 var (
 	versionFlag      bool
+	nowFlag          bool
 	version          string
 	logLevelFlag     string
 	sourceFlag       string
@@ -62,8 +62,16 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 				utils.Logger.Fatal("Failed to open existing directory repository.", zap.Error(err))
 			}
 		}
+		if nowFlag {
+			if len(args) > 0 {
+				utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
+				if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
+					utils.Logger.Error("Failed to run command.", zap.Error(err))
+				}
+			}
+			os.Exit(0)
+		}
 
-		log.Println("Starting remote repository watcher...")
 		for {
 			// Get the latest commit hash from the remote repository
 			remoteCommit, err := utils.GetLatestRemoteCommit(r, branch)
@@ -80,7 +88,7 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 			}
 
 			if remoteCommit != localCommit {
-				log.Println("Detected remote changes. Pulling for latest changes...")
+				utils.Logger.Info("Detected remote changes.", zap.String("url", source), zap.String("branch", branch))
 				if err := utils.PullRepo(r); err != nil {
 					utils.Logger.Info("Failed to pull. Recloning repository.", zap.String("url", source))
 					err := os.RemoveAll(dir)
@@ -130,6 +138,7 @@ func Execute() {
 
 func init() {
 	RootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "display version information")
+	RootCmd.Flags().BoolVarP(&nowFlag, "now", "", false, "run the command on the targeted branch now")
 	RootCmd.PersistentFlags().StringVarP(&logLevelFlag, "log-level", "l", "info", "override log level (debug, info, error)")
 	RootCmd.PersistentFlags().StringVarP(&sourceFlag, "source", "s", "", "git repository to watch")
 	RootCmd.PersistentFlags().StringVarP(&branchFlag, "branch", "b", "main", "branch to watch")

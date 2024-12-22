@@ -19,6 +19,7 @@ ginx [flags] -- <command>
   -h, --help               help for ginx
   -n, --interval int       interval in seconds to poll the remote repo (default 30)
   -l, --log-level string   override log level (debug, info, error) (default "info")
+      --now                run the command on the targeted branch now
   -s, --source string      git repository to watch
   -v, --version            display version information
 ```
