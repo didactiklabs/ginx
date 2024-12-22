@@ -31,13 +31,14 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 `,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Initialize configuration here
-		if versionFlag {
-			fmt.Printf("%s", version)
-		} else {
-			initConfig()
-		}
+		initConfig()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		if versionFlag {
+			fmt.Printf("%s", version)
+			os.Exit(0)
+		}
+
 		var r *git.Repository
 		var err error
 		source := sourceFlag
@@ -118,7 +119,6 @@ func initConfig() {
 		logLevel = zapcore.InfoLevel
 	}
 	utils.InitializeLogger(logLevel)
-	utils.Logger.Info("Initialized configuration.")
 }
 
 func Execute() {
