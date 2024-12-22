@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -44,7 +46,8 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 		source := sourceFlag
 		branch := branchFlag
 		interval := time.Duration(pollIntervalFlag) * time.Second
-		dir, err := os.MkdirTemp("", "ginx-*")
+		projectName := path.Base(strings.TrimSuffix(source, "/"))
+		dir, err := os.MkdirTemp("", fmt.Sprintf("ginx-%s-*", projectName))
 		if err != nil {
 			utils.Logger.Fatal("Failed to create temporary directory.", zap.Error(err))
 		}
