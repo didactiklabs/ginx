@@ -14,6 +14,7 @@
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Example](#example)
 - [License](#license)
 
 ## Features
@@ -23,6 +24,7 @@
 - **Configurable Intervals**: Set the polling frequency for repository checks.
 - **Flexible Logging**: Adjust log levels for better visibility or minimal noise.
 - **Version Display**: Check the current version of the tool.
+- **Git Repo Work Directory Sandboxing**: It is possible to open your IDE as the ginx command and just work there until you close it. Each time you run this command, it will instantiate another working directory.
 
 ## Installation
 
@@ -40,6 +42,26 @@ Ensure that you have the required dependencies installed.
 ## Usage
 
 See [Documentations](docs/ginx.md).
+
+## Example
+
+Run a colmena local update to rebuild your NixOS immediately:
+
+```bash
+ginx --source https://github.com/didactiklabs/nixbook -b main --now -- colmena apply-local --sudo
+```
+
+Watch and trigger update on changes:
+
+```bash
+ginx --source https://github.com/didactiklabs/nixOs-server -b main -n 60 -- colmena apply-local --sudo
+```
+
+Open your IDE in a sandbox of your repository:
+
+```bash
+ginx --source https://github.com/didactiklabs/ginx -b main --now -- vim .
+```
 
 ## License
 
