@@ -28,7 +28,7 @@
 
 ## Installation
 
-To install `ytui`, follow the instructions for your operating system.
+To install `ginx`, follow the instructions for your operating system.
 Ensure that you have the required dependencies installed.
 
 1. **Install binary**
