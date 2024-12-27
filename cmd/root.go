@@ -18,6 +18,7 @@ import (
 var (
 	versionFlag      bool
 	nowFlag          bool
+	exitFailFlag     bool
 	version          string
 	logLevelFlag     string
 	sourceFlag       string
@@ -106,6 +107,9 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 				if len(args) > 0 {
 					utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
 					if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
+						if exitFailFlag {
+							utils.Logger.Fatal("Failed to run command.", zap.Error(err))
+						}
 						utils.Logger.Error("Failed to run command.", zap.Error(err))
 					}
 				}
@@ -142,6 +146,7 @@ func Execute() {
 func init() {
 	RootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "display version information")
 	RootCmd.Flags().BoolVarP(&nowFlag, "now", "", false, "run the command on the targeted branch now")
+	RootCmd.Flags().BoolVarP(&exitFailFlag, "exit-on-fail", "", false, "exit on command fail")
 	RootCmd.PersistentFlags().StringVarP(&logLevelFlag, "log-level", "l", "info", "override log level (debug, info, error)")
 	RootCmd.PersistentFlags().StringVarP(&sourceFlag, "source", "s", "", "git repository to watch")
 	RootCmd.PersistentFlags().StringVarP(&branchFlag, "branch", "b", "main", "branch to watch")
