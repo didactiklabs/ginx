@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -71,7 +72,15 @@ func RunCommand(dirName, command string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dirName
-	return cmd.Run()
+	// Ensure the command runs independently of the parent process
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true, // Start the command in a new process group
+	}
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	return cmd.Wait()
 }
 
 func GetLatestRemoteCommit(r *git.Repository, branch string) (string, error) {
