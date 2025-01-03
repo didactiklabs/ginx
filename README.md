@@ -40,6 +40,28 @@ Ensure that you have the required dependencies installed.
    Please note that binaries are available on the release pages, you can extract the archives for your
    platform and manually install it.
 
+   <details>
+   <summary>Linux / WSL</summary>
+
+   > You can use the following package manager:
+   >
+   > | Distribution | Repository  | Instructions                          |
+   > | ------------ | ----------- | ------------------------------------- |
+   > | _Any_        | [Linuxbrew] | `brew install didactiklabs/ginx/ginx` |
+   > | Arch Linux   | [AUR]       | `yay -S ginx-bin`                     |
+
+   </details>
+   <details>
+   <summary>macOS</summary>
+
+   > You can use the following package manager:
+   >
+   > | Distribution | Repository  | Instructions                          |
+   > | ------------ | ----------- | ------------------------------------- |
+   > | _Any_        | [Linuxbrew] | `brew install didactiklabs/ginx/ginx` |
+
+   </details>
+
 ## Usage
 
 See [Documentations](docs/ginx.md).
