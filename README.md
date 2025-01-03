@@ -4,6 +4,7 @@
 ![star]
 [![Downloads][downloads-badge]][releases]
 ![version]
+![aurversion]
 
 </div>
 
@@ -76,3 +77,4 @@ For more detailed usage, you can always use `ginx --help`.
 [releases]: https://github.com/didactiklabs/ginx/releases
 [star]: https://img.shields.io/github/stars/didactiklabs/ginx
 [version]: https://img.shields.io/github/v/release/didactiklabs/ginx
+[aurversion]: https://img.shields.io/aur/version/ginx-bin
