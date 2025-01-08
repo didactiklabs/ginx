@@ -12,11 +12,14 @@
 
 ## Table of Contents
 
+<img align=left src="public/ginx.png" width="170vw" />
+
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Example](#example)
 - [License](#license)
+- [Get Ginxed](#license)
 
 ## Features
 
