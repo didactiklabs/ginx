@@ -17,6 +17,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22.6'
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -25,5 +30,5 @@ jobs:
           args: release --clean
           workdir: ./
         env:
-          GITHUB_TOKEN: ${{ secrets.DIDACTIKLABS_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           AUR_KEY: ${{ secrets.AUR_KEY }}
