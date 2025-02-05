@@ -58,12 +58,20 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 			r, err = utils.CloneRepo(source, branch, dir)
 			if err != nil {
 				utils.Logger.Fatal("Failed to clone repository.", zap.Error(err))
+				err := os.RemoveAll(dir)
+				if err != nil {
+					utils.Logger.Fatal("error removing directory.", zap.Error(err))
+				}
 			}
 		} else {
 			r, err = git.PlainOpen(dir)
 			utils.Logger.Info("Repository already exist, open directory repository.", zap.String("directory", dir))
 			if err != nil {
 				utils.Logger.Fatal("Failed to open existing directory repository.", zap.Error(err))
+				err := os.RemoveAll(dir)
+				if err != nil {
+					utils.Logger.Fatal("error removing directory.", zap.Error(err))
+				}
 			}
 		}
 		if nowFlag {
@@ -71,7 +79,15 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 				utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
 				if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
 					utils.Logger.Error("Failed to run command.", zap.Error(err))
+					err := os.RemoveAll(dir)
+					if err != nil {
+						utils.Logger.Fatal("error removing directory.", zap.Error(err))
+					}
 				}
+			}
+			err := os.RemoveAll(dir)
+			if err != nil {
+				utils.Logger.Fatal("error removing directory.", zap.Error(err))
 			}
 			os.Exit(0)
 		}
@@ -82,6 +98,10 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 			utils.Logger.Debug("Fetched remote commit.", zap.String("remoteCommit", remoteCommit))
 			if err != nil {
 				utils.Logger.Fatal("error fetching local commit.", zap.Error(err))
+				err := os.RemoveAll(dir)
+				if err != nil {
+					utils.Logger.Fatal("error removing directory.", zap.Error(err))
+				}
 			}
 
 			// Get the latest commit hash from the local repository
@@ -89,6 +109,10 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 			utils.Logger.Debug("Fetched local commit.", zap.String("localCommit", localCommit))
 			if err != nil {
 				utils.Logger.Fatal("error fetching local commit.", zap.Error(err))
+				err := os.RemoveAll(dir)
+				if err != nil {
+					utils.Logger.Fatal("error removing directory.", zap.Error(err))
+				}
 			}
 
 			if remoteCommit != localCommit {
@@ -102,6 +126,10 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 					_, err = utils.CloneRepo(source, branch, dir)
 					if err != nil {
 						utils.Logger.Fatal("Failed to clone repository.", zap.Error(err))
+						err := os.RemoveAll(dir)
+						if err != nil {
+							utils.Logger.Fatal("error removing directory.", zap.Error(err))
+						}
 					}
 				}
 				if len(args) > 0 {
@@ -109,8 +137,16 @@ Ginx is a cli tool that watch a remote repository and run an arbitrary command o
 					if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
 						if exitFailFlag {
 							utils.Logger.Fatal("Failed to run command.", zap.Error(err))
+							err := os.RemoveAll(dir)
+							if err != nil {
+								utils.Logger.Fatal("error removing directory.", zap.Error(err))
+							}
 						}
 						utils.Logger.Error("Failed to run command.", zap.Error(err))
+						err := os.RemoveAll(dir)
+						if err != nil {
+							utils.Logger.Fatal("error removing directory.", zap.Error(err))
+						}
 					}
 				}
 			} else {
