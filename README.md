@@ -48,10 +48,9 @@ Ensure that you have the required dependencies installed.
 
    > You can use the following package manager:
    >
-   > | Distribution | Repository  | Instructions                          |
-   > | ------------ | ----------- | ------------------------------------- |
-   > | _Any_        | [Linuxbrew] | `brew install didactiklabs/ginx/ginx` |
-   > | Arch Linux   | [AUR]       | `yay -S ginx-bin`                     |
+   > | Distribution | Repository | Instructions      |
+   > | ------------ | ---------- | ----------------- |
+   > | Arch Linux   | [AUR]      | `yay -S ginx-bin` |
 
    </details>
    <details>
@@ -59,9 +58,8 @@ Ensure that you have the required dependencies installed.
 
    > You can use the following package manager:
    >
-   > | Distribution | Repository  | Instructions                          |
-   > | ------------ | ----------- | ------------------------------------- |
-   > | _Any_        | [Linuxbrew] | `brew install didactiklabs/ginx/ginx` |
+   > | Distribution | Repository | Instructions |
+   > | ------------ | ---------- | ------------ |
 
    </details>
 
