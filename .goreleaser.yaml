@@ -43,16 +43,3 @@ aurs:
       name: 'Victor Hang'
       email: 'vhvictorhang@gmail.com'
     skip_upload: auto
-brews:
-  - name: 'ginx'
-    homepage: https://github.com/didactiklabs/ginx
-    description: 'Ginx is a cli tool that watch a remote repository and run an arbitrary command on changes/updates.'
-    directory: Formula
-    commit_author:
-      name: 'Victor Hang'
-      email: 'vhvictorhang@gmail.com'
-    commit_msg_template: 'chore: Brew formula update for {{ .ProjectName }} version {{ .Tag }}'
-    repository:
-      owner: didactiklabs
-      name: homebrew-ginx
-      branch: main
