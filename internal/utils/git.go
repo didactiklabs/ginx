@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"go.uber.org/zap"
 )
 
 func IsRepoCloned(dirName string) bool {
@@ -17,17 +18,14 @@ func IsRepoCloned(dirName string) bool {
 }
 
 func PullRepo(r *git.Repository) error {
-	// Get the working directory for the repository
 	w, err := r.Worktree()
 	if err != nil {
 		return err
 	}
-	// Pull the latest changes from the origin remote and merge into the current branch
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != nil {
 		return err
 	}
-	// Print the latest commit that was just pulled
 	ref, err := r.Head()
 	if err != nil {
 		return err
@@ -36,24 +34,20 @@ func PullRepo(r *git.Repository) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(commit)
+	Logger.Debug("Pulled latest commit.", zap.String("commit", commit.Hash.String()))
 	return nil
 }
 
 func CloneRepo(source, branch, dir string) (*git.Repository, error) {
-	url := source
-	directory := dir
-	// Clone the given repository to the given directory
 	branchRefName := plumbing.NewBranchReferenceName(branch)
-	r, err := git.PlainClone(directory, false, &git.CloneOptions{
-		URL:               url,
+	r, err := git.PlainClone(dir, false, &git.CloneOptions{
+		URL:               source,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		ReferenceName:     plumbing.ReferenceName(branchRefName),
 	})
 	if err != nil {
 		return r, err
 	}
-	// Print the latest commit that was just pulled
 	ref, err := r.Head()
 	if err != nil {
 		return r, err
@@ -62,7 +56,7 @@ func CloneRepo(source, branch, dir string) (*git.Repository, error) {
 	if err != nil {
 		return r, err
 	}
-	fmt.Println(commit)
+	Logger.Debug("Cloned repository.", zap.String("commit", commit.Hash.String()))
 	return r, nil
 }
 
@@ -75,26 +69,23 @@ func RunCommand(dirName, command string, args ...string) error {
 }
 
 func GetLatestRemoteCommit(r *git.Repository, branch string) (string, error) {
-	// Create the remote with repository URL
 	rem, err := r.Remote("origin")
 	if err != nil {
 		return "", err
 	}
 	refs, err := rem.List(&git.ListOptions{
-		// Returns all references, including peeled references.
 		PeelingOption: git.IgnorePeeled,
 	})
 	if err != nil {
 		return "", err
 	}
-	var refHash string
+	target := fmt.Sprintf("refs/heads/%s", branch)
 	for _, ref := range refs {
-		if ref.Name().String() == fmt.Sprintf("refs/heads/%s", branch) {
-			refHash = ref.Hash().String()
-			break
+		if ref.Name().String() == target {
+			return ref.Hash().String(), nil
 		}
 	}
-	return refHash, nil
+	return "", nil
 }
 
 func GetLatestLocalCommit(dir string) (string, error) {
@@ -102,7 +93,6 @@ func GetLatestLocalCommit(dir string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Print the latest commit.
 	ref, err := r.Head()
 	if err != nil {
 		return "", err

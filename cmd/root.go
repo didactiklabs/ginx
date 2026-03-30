@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -29,145 +32,137 @@ var (
 var RootCmd = &cobra.Command{
 	Use:   "ginx [flags] -- <command>",
 	Short: "ginx",
-	Long: `
-Ginx is a cli tool that watch a remote repository and run an arbitrary command on changes/updates.
-`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Initialize configuration here
+	Long:  `Ginx is a cli tool that watch a remote repository and run an arbitrary command on changes/updates.`,
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		initConfig()
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		if versionFlag {
-			fmt.Printf("%s", version)
-			os.Exit(0)
-		}
-
-		var r *git.Repository
-		var err error
-		source := sourceFlag
-		branch := branchFlag
-		interval := time.Duration(pollIntervalFlag) * time.Second
-		projectName := path.Base(strings.TrimSuffix(source, "/"))
-		dir, err := os.MkdirTemp("", fmt.Sprintf("ginx-%s-*", projectName))
-		if err != nil {
-			utils.Logger.Fatal("Failed to create temporary directory.", zap.Error(err))
-		}
-
-		if !utils.IsRepoCloned(source) {
-			utils.Logger.Info("Cloning repository.", zap.String("url", source), zap.String("branch", branch))
-			r, err = utils.CloneRepo(source, branch, dir)
-			if err != nil {
-				err := os.RemoveAll(dir)
-				if err != nil {
-					utils.Logger.Fatal("error removing directory.", zap.Error(err))
-				}
-				utils.Logger.Fatal("Failed to clone repository.", zap.Error(err))
-			}
-		} else {
-			r, err = git.PlainOpen(dir)
-			utils.Logger.Info("Repository already exist, open directory repository.", zap.String("directory", dir))
-			if err != nil {
-				err := os.RemoveAll(dir)
-				if err != nil {
-					utils.Logger.Fatal("error removing directory.", zap.Error(err))
-				}
-				utils.Logger.Fatal("Failed to open existing directory repository.", zap.Error(err))
-			}
-		}
-		if nowFlag {
-			if len(args) > 0 {
-				utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
-				if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
-					err := os.RemoveAll(dir)
-					if err != nil {
-						utils.Logger.Fatal("error removing directory.", zap.Error(err))
-					}
-					utils.Logger.Error("Failed to run command.", zap.Error(err))
-				}
-			}
-			err := os.RemoveAll(dir)
-			if err != nil {
-				utils.Logger.Fatal("error removing directory.", zap.Error(err))
-			}
-			os.Exit(0)
-		}
-
-		for {
-			// Get the latest commit hash from the remote repository
-			remoteCommit, err := utils.GetLatestRemoteCommit(r, branch)
-			utils.Logger.Debug("Fetched remote commit.", zap.String("remoteCommit", remoteCommit))
-			if err != nil {
-				err := os.RemoveAll(dir)
-				if err != nil {
-					utils.Logger.Fatal("error removing directory.", zap.Error(err))
-				}
-				utils.Logger.Fatal("error fetching local commit.", zap.Error(err))
-			}
-
-			// Get the latest commit hash from the local repository
-			localCommit, err := utils.GetLatestLocalCommit(dir)
-			utils.Logger.Debug("Fetched local commit.", zap.String("localCommit", localCommit))
-			if err != nil {
-				err := os.RemoveAll(dir)
-				if err != nil {
-					utils.Logger.Fatal("error removing directory.", zap.Error(err))
-				}
-				utils.Logger.Fatal("error fetching local commit.", zap.Error(err))
-			}
-
-			if remoteCommit != localCommit {
-				utils.Logger.Info("Detected remote changes.", zap.String("url", source), zap.String("branch", branch))
-				if err := utils.PullRepo(r); err != nil {
-					utils.Logger.Info("Failed to pull. Recloning repository.", zap.String("url", source))
-					err := os.RemoveAll(dir)
-					if err != nil {
-						utils.Logger.Fatal("error removing directory.", zap.Error(err))
-					}
-					_, err = utils.CloneRepo(source, branch, dir)
-					if err != nil {
-						utils.Logger.Fatal("Failed to clone repository.", zap.Error(err))
-						err := os.RemoveAll(dir)
-						if err != nil {
-							utils.Logger.Fatal("error removing directory.", zap.Error(err))
-						}
-					}
-				}
-				if len(args) > 0 {
-					utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
-					if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
-						if exitFailFlag {
-							err := os.RemoveAll(dir)
-							if err != nil {
-								utils.Logger.Fatal("error removing directory.", zap.Error(err))
-							}
-							utils.Logger.Fatal("Failed to run command.", zap.Error(err))
-						}
-						err := os.RemoveAll(dir)
-						if err != nil {
-							utils.Logger.Fatal("error removing directory.", zap.Error(err))
-						}
-						utils.Logger.Error("Failed to run command.", zap.Error(err))
-					}
-				}
-			} else {
-				utils.Logger.Info("No changes detected in remote repository.", zap.String("url", source), zap.String("branch", branch))
-			}
-			time.Sleep(interval)
-		}
-	},
+	Run:  run,
 	Args: cobra.ArbitraryArgs,
 }
 
+func run(_ *cobra.Command, args []string) {
+	defer utils.SyncLogger()
+
+	if versionFlag {
+		fmt.Printf("%s", version)
+		return
+	}
+
+	source := sourceFlag
+	branch := branchFlag
+	interval := time.Duration(pollIntervalFlag) * time.Second
+	projectName := path.Base(strings.TrimSuffix(source, "/"))
+
+	dir, err := os.MkdirTemp("", fmt.Sprintf("ginx-%s-*", projectName))
+	if err != nil {
+		utils.Logger.Fatal("Failed to create temporary directory.", zap.Error(err))
+	}
+	defer os.RemoveAll(dir)
+
+	r, err := initRepo(source, branch, dir)
+	if err != nil {
+		utils.Logger.Fatal("Failed to initialize repository.", zap.Error(err))
+	}
+
+	if nowFlag {
+		runOnce(args, dir)
+		return
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	poll(ctx, r, source, branch, dir, args, interval)
+}
+
+func initRepo(source, branch, dir string) (*git.Repository, error) {
+	if !utils.IsRepoCloned(source) {
+		utils.Logger.Info("Cloning repository.", zap.String("url", source), zap.String("branch", branch))
+		return utils.CloneRepo(source, branch, dir)
+	}
+	utils.Logger.Info("Repository already exists, opening directory.", zap.String("directory", dir))
+	return git.PlainOpen(dir)
+}
+
+func runOnce(args []string, dir string) {
+	if len(args) == 0 {
+		return
+	}
+	utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
+	if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
+		utils.Logger.Error("Failed to run command.", zap.Error(err))
+	}
+}
+
+func poll(
+	ctx context.Context,
+	r *git.Repository,
+	source, branch, dir string,
+	args []string,
+	interval time.Duration,
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			utils.Logger.Info("Shutdown signal received, exiting.")
+			return
+		default:
+		}
+
+		remoteCommit, err := utils.GetLatestRemoteCommit(r, branch)
+		if err != nil {
+			utils.Logger.Fatal("Error fetching remote commit.", zap.Error(err))
+		}
+		utils.Logger.Debug("Fetched remote commit.", zap.String("remoteCommit", remoteCommit))
+
+		localCommit, err := utils.GetLatestLocalCommit(dir)
+		if err != nil {
+			utils.Logger.Fatal("Error fetching local commit.", zap.Error(err))
+		}
+		utils.Logger.Debug("Fetched local commit.", zap.String("localCommit", localCommit))
+
+		if remoteCommit == localCommit {
+			utils.Logger.Info(
+				"No changes detected.",
+				zap.String("url", source),
+				zap.String("branch", branch),
+			)
+			time.Sleep(interval)
+			continue
+		}
+
+		utils.Logger.Info("Detected remote changes.", zap.String("url", source), zap.String("branch", branch))
+
+		if err := utils.PullRepo(r); err != nil {
+			utils.Logger.Info("Failed to pull, recloning.", zap.String("url", source))
+			newR, cloneErr := utils.CloneRepo(source, branch, dir)
+			if cloneErr != nil {
+				utils.Logger.Fatal("Failed to reclone repository.", zap.Error(cloneErr))
+			}
+			r = newR
+		}
+
+		if len(args) > 0 {
+			utils.Logger.Info("Running command.", zap.String("command", args[0]), zap.Any("args", args[1:]))
+			if err := utils.RunCommand(dir, args[0], args[1:]...); err != nil {
+				if exitFailFlag {
+					utils.Logger.Fatal("Failed to run command.", zap.Error(err))
+				}
+				utils.Logger.Error("Failed to run command.", zap.Error(err))
+			}
+		}
+
+		time.Sleep(interval)
+	}
+}
+
 func initConfig() {
-	// Your configuration initialization logic
-	logLevel := zapcore.InfoLevel //nolint:all
+	logLevel := zapcore.InfoLevel
 	switch logLevelFlag {
 	case "debug":
 		logLevel = zapcore.DebugLevel
 	case "error":
 		logLevel = zapcore.ErrorLevel
-	default:
-		logLevel = zapcore.InfoLevel
 	}
 	utils.InitializeLogger(logLevel)
 }
@@ -181,8 +176,8 @@ func Execute() {
 
 func init() {
 	RootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "display version information")
-	RootCmd.Flags().BoolVarP(&nowFlag, "now", "", false, "run the command on the targeted branch now")
-	RootCmd.Flags().BoolVarP(&exitFailFlag, "exit-on-fail", "", false, "exit on command fail")
+	RootCmd.Flags().BoolVar(&nowFlag, "now", false, "run the command on the targeted branch now")
+	RootCmd.Flags().BoolVar(&exitFailFlag, "exit-on-fail", false, "exit on command fail")
 	RootCmd.PersistentFlags().StringVarP(&logLevelFlag, "log-level", "l", "info", "override log level (debug, info, error)")
 	RootCmd.PersistentFlags().StringVarP(&sourceFlag, "source", "s", "", "git repository to watch")
 	RootCmd.PersistentFlags().StringVarP(&branchFlag, "branch", "b", "main", "branch to watch")
