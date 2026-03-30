@@ -30,16 +30,16 @@ archives:
       - README.md
       - LICENSE
       - docs/*
-aurs:
-  - name: 'ginx-bin'
-    homepage: 'https://github.com/didactiklabs/ginx'
-    description: 'Ginx is a cli tool that watch a remote repository and run an arbitrary command on changes/updates.'
-    maintainers:
-      - 'Victor Hang <vhvictorhang@gmail.com>'
-    license: 'MIT'
-    private_key: '{{ .Env.AUR_KEY }}'
-    git_url: 'ssh://aur@aur.archlinux.org/ginx-bin.git'
-    commit_author:
-      name: 'Victor Hang'
-      email: 'vhvictorhang@gmail.com'
-    skip_upload: auto
+# aurs:
+#   - name: 'ginx-bin'
+#     homepage: 'https://github.com/didactiklabs/ginx'
+#     description: 'Ginx is a cli tool that watch a remote repository and run an arbitrary command on changes/updates.'
+#     maintainers:
+#       - 'Victor Hang <vhvictorhang@gmail.com>'
+#     license: 'MIT'
+#     private_key: '{{ .Env.AUR_KEY }}'
+#     git_url: 'ssh://aur@aur.archlinux.org/ginx-bin.git'
+#     commit_author:
+#       name: 'Victor Hang'
+#       email: 'vhvictorhang@gmail.com'
+#     skip_upload: auto
