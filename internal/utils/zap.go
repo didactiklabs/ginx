@@ -8,18 +8,15 @@ import (
 var Logger *zap.Logger
 
 func InitializeLogger(logLevel zapcore.Level) {
-	// Create all necessary directories for the log file
-
 	config := zap.Config{
-		Level:       zap.NewAtomicLevelAt(logLevel), // Set the log level
+		Level:       zap.NewAtomicLevelAt(logLevel),
 		Development: false,
 		Sampling: &zap.SamplingConfig{
 			Initial:    100,
 			Thereafter: 100,
 		},
-		Encoding:      "json",
-		EncoderConfig: zap.NewProductionEncoderConfig(),
-
+		Encoding:         "json",
+		EncoderConfig:    zap.NewProductionEncoderConfig(),
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
 	}
@@ -29,5 +26,10 @@ func InitializeLogger(logLevel zapcore.Level) {
 	if err != nil {
 		panic(err)
 	}
-	defer Logger.Sync() //nolint:all
+}
+
+func SyncLogger() {
+	if Logger != nil {
+		_ = Logger.Sync()
+	}
 }
