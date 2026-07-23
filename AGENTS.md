@@ -5,7 +5,7 @@
 **ginx** is a lightweight Go CLI tool that monitors remote Git repositories for changes and executes custom commands when updates are detected. Built for automating deployments, tasks, and workflows.
 
 - **Module:** `github.com/didactiklabs/ginx`
-- **Go version:** 1.23.3
+- **Go version:** 1.26.4
 - **License:** MIT
 - **Current version:** v0.0.7
 
@@ -13,7 +13,7 @@
 
 | Component | Technology |
 |---|---|
-| Language | Go 1.23.3 |
+| Language | Go 1.26.4 |
 | CLI framework | `github.com/spf13/cobra` v1.8.1 |
 | Git operations | `github.com/go-git/go-git/v5` v5.13.2 |
 | Logging | `go.uber.org/zap` v1.27.0 |
